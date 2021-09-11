@@ -1,0 +1,15 @@
+{
+	"name": "crosschat",
+	"version": "2.0.0",
+	"description": "Chat between channels!",
+	"main": "crossc.js",
+	"scripts": {
+		"start": "node crossc.js"
+	},
+	"keywords": [],
+	"author": "Xivz",
+	"license": "ISC",
+	"dependencies": {
+		"discord.js": "^13.1.0"
+	}
+}
