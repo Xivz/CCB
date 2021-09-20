@@ -136,7 +136,7 @@ client.once('ready', () => {
                   } catch(err) {
                     console.error(err);             
                   }
-            }else if (interaction.author.id==373596823882825728n && interaction.content===prefix+" restart") {
+            }else if (interaction.author.id===ownerid && interaction.content===prefix+" restart") {
                 try {
                     busy=true  
                     await interaction.delete()
