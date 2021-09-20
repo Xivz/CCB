@@ -1,5 +1,5 @@
 const {prefix, token, c1, c2, ownerid}=require('./set.json')
-const { Client, Intents, TextChannel, Webhook, MessageEmbed, MessageAttachment }=require('discord.js')
+const { Client, Intents, MessageAttachment }=require('discord.js')
 const client = new Client({intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
 
 const cs=[];
@@ -33,7 +33,7 @@ async function createWeb(channel) {
             return
         }
     }
-    console.log("Started channel: "+channel.id+" ("+channel.name+")");
+    console.log(`Started channel: ${channel.id} ('#${channel.name}')\nUsing already existing webhook ('${w1bs.name}'')`);
     } else {
         await channel.send("> This channel type is not supported.")
         .catch(e=>console.log(e))
@@ -84,7 +84,7 @@ async function sendMessage(interaction,webhook) {
             }
             sentMessages[interaction.id]=w;
             amount=amount+1;
-            console.log('\x1b[33m%s\x1b[0m',`sent a message to '${interaction.channel.name}' from ${interaction.author.username} (${interaction.author.id}, guild: '${interaction.channel.guild.name}')`);
+            console.log('\x1b[33m%s\x1b[0m',`sent a message to '#${interaction.channel.name}' from ${interaction.author.username} (${interaction.author.id}, guild: '${interaction.channel.guild.name}')`);
         } catch (error) {
             console.error('Error trying to send a message: ', error);
         };
@@ -92,24 +92,35 @@ async function sendMessage(interaction,webhook) {
 }
 
 client.once('ready', () => {
-    client.user.setStatus("online");
-    setInterval(() => {
-        client.user.setActivity(amount.toString())
-      }, 10000);
+    try {
+        cs.push(client.channels.cache.get(c1));
+        cs.push(client.channels.cache.get(c2));
+        if (cs[1].id===cs[0].id || cs[0].id===cs[1].id) {
+            console.error("Both channels can not be the same");return
+        }
+        console.log("Discord connection success\nStarting Channels: " + cs[0].id + " " + cs[1].id);  
+        // safe to request status
+        client.user.setStatus("online");
+        setInterval(() => {
+            client.user.setActivity(amount.toString())
+          }, 10000);
+        //init both channels
+        createWeb(cs[0]);
+        createWeb(cs[1]);
+    } catch(e) {
+        console.error("There was an error initializing:");
+        if (typeof cs[0]==="undefined"||typeof cs[1]==="undefined" ) {
+            console.error(e+"\nperhaps try checking your channels");
+        } else {
+            console.error(e);
+        } return
+    }
 
-    cs.push(client.channels.cache.get(c1));
-    cs.push(client.channels.cache.get(c2));
-    console.log("Discord connection success\nStarting Channels: "+cs[0].id+" "+cs[1].id);  
-    //init both channels
-    createWeb(cs[0]);
-    createWeb(cs[1]);
-
-    
 	client.on('messageCreate', async interaction => {
         if (interaction.author.bot) return;
 
-        if (interaction.author.id===ownerid || interaction.author.id===interaction.guild.ownerID) { //check if user is permed
-            if (interaction.author.id===ownerid && interaction.content===prefix+" shutdown") { //check if is commmand (to bottom)
+        if (interaction.author.id===ownerid || interaction.author.id===interaction.guild.ownerID) {
+            if (interaction.author.id===ownerid && interaction.content===prefix+" shutdown") {
                 try {
                     busy=true; 
                     for (const hook of createdHooks) {
@@ -124,9 +135,8 @@ client.once('ready', () => {
                     .then(() => client.destroy());
                   } catch(err) {
                     console.error(err);             
-
                   }
-            }else if (interaction.author.id===ownerid && interaction.content===prefix+" restart") {
+            }else if (interaction.author.id==373596823882825728n && interaction.content===prefix+" restart") {
                 try {
                     busy=true  
                     await interaction.delete()
@@ -157,7 +167,7 @@ client.once('ready', () => {
                 }
             }
         }
-        if (busy===false) { // if no command is running, start fetching webhooks
+        if (busy===false) {
             for (const ca in cs) {
                 try {
                     const webhooks=await cs[(-ca)+1].fetchWebhooks();
@@ -165,12 +175,12 @@ client.once('ready', () => {
                 } catch (error) {
                     console.error("An error occured while indexing webhooks: "+error)
                 };
-                if (ca && interaction.channel.id===cs[ca].id && webhook) { // webhook is found, send message to contrary channel
+                if (ca && interaction.channel.id===cs[ca].id && webhook) {
                     await sendMessage(interaction,webhook);
-                } else if (typeof webhook === 'undefined') { // fallback if webhook is not found 
+                } else if (typeof webhook === 'undefined') {
                     await saveWebhook(cs[(-ca)+1]);
                 };
-                
+
             }    
         }
     });
