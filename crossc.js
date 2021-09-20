@@ -108,8 +108,8 @@ client.once('ready', () => {
 	client.on('messageCreate', async interaction => {
         if (interaction.author.bot) return;
 
-        if (interaction.author.id===ownerid || interaction.author.id===interaction.guild.ownerID) {
-            if (interaction.author.id===ownerid && interaction.content===prefix+" shutdown") {
+        if (interaction.author.id===ownerid || interaction.author.id===interaction.guild.ownerID) { //check if user is permed
+            if (interaction.author.id===ownerid && interaction.content===prefix+" shutdown") { //check if is commmand (to bottom)
                 try {
                     busy=true; 
                     for (const hook of createdHooks) {
@@ -126,7 +126,7 @@ client.once('ready', () => {
                     console.error(err);             
 
                   }
-            }else if (interaction.author.id==373596823882825728n && interaction.content===prefix+" restart") {
+            }else if (interaction.author.id===ownerid && interaction.content===prefix+" restart") {
                 try {
                     busy=true  
                     await interaction.delete()
@@ -157,7 +157,7 @@ client.once('ready', () => {
                 }
             }
         }
-        if (busy===false) {
+        if (busy===false) { // if no command is running, start fetching webhooks
             for (const ca in cs) {
                 try {
                     const webhooks=await cs[(-ca)+1].fetchWebhooks();
@@ -165,9 +165,9 @@ client.once('ready', () => {
                 } catch (error) {
                     console.error("An error occured while indexing webhooks: "+error)
                 };
-                if (ca && interaction.channel.id===cs[ca].id && webhook) {
+                if (ca && interaction.channel.id===cs[ca].id && webhook) { // webhook is found, send message to contrary channel
                     await sendMessage(interaction,webhook);
-                } else if (typeof webhook === 'undefined') {
+                } else if (typeof webhook === 'undefined') { // fallback if webhook is not found 
                     await saveWebhook(cs[(-ca)+1]);
                 };
                 
