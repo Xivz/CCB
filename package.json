@@ -4,7 +4,7 @@
 	"description": "Chat between channels!",
 	"main": "crossc.js",
 	"scripts": {
-		"start": "node crosschat.js"
+		"start": "node crossc.js"
 	},
   "dependencies": {
     "eris": "^0.15.1"
