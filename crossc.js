@@ -107,12 +107,12 @@ bot.on("ready", () => {
                                 inline: true
                             },
                             {
-                                name: 'Channel 1',
+                                name: 'Channel 1:',
                                 value: `'${cs[0].name}' (${cs[0].id})`,
                                 inline: false
                             },
                             {
-                                name: 'Channel 2',
+                                name: 'Channel 2:',
                                 value: `'${cs[1].name}' (${cs[1].id})`,
                                 inline: false
                             },
