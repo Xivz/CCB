@@ -1,6 +1,6 @@
 {
   "name": "crosschatbot",
-	"version": "3.0.0--eris",
+	"version": "2.8--eris",
 	"description": "Chat between channels!",
 	"main": "crossc.js",
 	"scripts": {
