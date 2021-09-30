@@ -38,9 +38,8 @@ const bot = new Eris(token);
 bot.on("ready", () => {
     try {
         const server=bot.guilds.get(bot.channelGuildMap[c1]).channels;
-        const server2=bot.guilds.get(bot.channelGuildMap[c2]).channels;
         cs.push(server.get(c1));
-        cs.push(server2.get(c2));
+        cs.push(server.get(c2));
         console.log("Discord connection success\nStarting Channels: " + cs[0].id + " " + cs[1].id);var uptime=Date.now()
         //init both channels
         createWeb(cs[0]);
@@ -171,6 +170,8 @@ bot.on("ready", () => {
     });
 });
 
-
-
-bot.connect();
+try {
+    bot.connect();
+} catch (error) {
+    console.error(error);
+};
