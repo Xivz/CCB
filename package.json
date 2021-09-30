@@ -1,15 +1,12 @@
 {
-	"name": "crosschat",
-	"version": "2.1.0",
+  "name": "crosschatbot",
+	"version": "3.0.0--eris",
 	"description": "Chat between channels!",
 	"main": "crossc.js",
 	"scripts": {
-		"start": "node crossc.js"
+		"start": "node crosschat.js"
 	},
-	"keywords": [],
-	"author": "Xivz",
-	"license": "ISC",
-	"dependencies": {
-		"discord.js": "^13.1.0"
-	}
+  "dependencies": {
+    "eris": "^0.15.1"
+  }
 }
