@@ -35,6 +35,7 @@ async function sendMessage(interaction,webhook) {
     }
 }
 const bot = new Eris(token);
+try {
 bot.on("ready", () => {
     try {
         const server=bot.guilds.get(bot.channelGuildMap[c1]).channels;
@@ -170,9 +171,6 @@ bot.on("ready", () => {
         }
     });
 });
+} catch(e) {console.error(e)}
 
-try {
-    bot.connect();
-} catch (error) {
-    console.error(error);
-};
+bot.connect();
