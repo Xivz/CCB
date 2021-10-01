@@ -4,6 +4,7 @@ const {prefix,c1,c2,ownerid,token}=require('./set.json')
 const cs=[];
 const createdHooks=new Map();
 const createdMessages=new Map();
+let initialized=false;
 
 async function createWeb(channel) {
     if (channel&&channel.type===0) {
@@ -35,17 +36,19 @@ async function sendMessage(interaction,webhook) {
     }
 }
 const bot = new Eris(token);
-try {
+
 bot.on("ready", () => {
     try {
         const server=bot.guilds.get(bot.channelGuildMap[c1]).channels;
         const server2=bot.guilds.get(bot.channelGuildMap[c2]).channels;
         cs.push(server.get(c1));
         cs.push(server2.get(c2));
-        console.log("Discord connection success\nStarting Channels: " + cs[0].id + " " + cs[1].id);var uptime=Date.now()
-        //init both channels
-        createWeb(cs[0]);
-        createWeb(cs[1]);
+        if (initialized!=true) {
+            console.log("Discord connection success\nStarting Channels: " + cs[0].id + " " + cs[1].id);var uptime=Date.now() //initialize
+            createWeb(cs[0]);
+            createWeb(cs[1]);
+            initialized=true;
+        } else {console.log("Reconnection success");}
     } catch(e) {
         console.error("There was an error initializing:");
         if (typeof cs[0]==="undefined"||typeof cs[1]==="undefined" ) {
@@ -171,6 +174,9 @@ bot.on("ready", () => {
         }
     });
 });
-} catch(e) {console.error(e)}
 
-bot.connect();
+try {
+    bot.connect();
+} catch (error) {
+    console.error(error)
+};
