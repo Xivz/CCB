@@ -10,9 +10,9 @@ async function createWeb(channel) {
     if (channel&&channel.type===0) {
         try {
             const wbs=await channel.getWebhooks();
-            let hook=wbs[0]||channel.createWebhook();
-            createdHooks.set(channel.id,hook);
-            return hook
+            let hook=wbs[0]||await channel.createWebhook(Object.assign({name: channel.name}));
+            createdHooks.set(channel.id,hook); console.log("Using webhook "+hook.name);
+            return hook;
         } catch (error) {
             console.error(error)
         }
@@ -20,8 +20,8 @@ async function createWeb(channel) {
 }
 async function sendMessage(interaction,webhook) {
     try {
-        var file=""
-        if (interaction.attachments[0]){file=interaction.attachments[0].url}
+        let file="";
+        if (interaction.attachments[0]){file=interaction.attachments[0].url};
         await bot.executeWebhook(webhook.id,webhook.token,Object.assign({
             content: `${interaction.content}\n${file}`
         },{
@@ -29,7 +29,16 @@ async function sendMessage(interaction,webhook) {
         },{
             avatarURL: interaction.author.avatarURL
         },{wait: true}
-        )).then(m=>createdMessages.set(interaction.id,m))
+        )).then(m=>createdMessages.set(interaction.id,m)).catch(async(e)=>{
+            console.log("Unable to send message to webhook, attempting to create a new webhook.\n"+e);
+            if (interaction.channel.type!=1) {
+                for (const ca in cs) {
+                    if (ca && interaction.channel.id===cs[ca].id && createdHooks.has(cs[(-ca)+1].id) ){
+                        await createWeb(cs[(-ca)+1]);
+                    }
+                } return;
+            } else {console.error("Channel type not supported");return;}
+        });
         console.log('\x1b[33m%s\x1b[0m',`sent a message to '#${interaction.channel.name}' from ${interaction.author.username} (${interaction.author.id}, guild: '${interaction.channel.guild.name}')`);
     } catch (error) {
         console.error('Error trying to send a message: ', error);
@@ -37,13 +46,14 @@ async function sendMessage(interaction,webhook) {
 }
 const bot = new Eris(token);
 
+try {
 bot.on("ready", () => {
     try {
         const server=bot.guilds.get(bot.channelGuildMap[c1]).channels;
         const server2=bot.guilds.get(bot.channelGuildMap[c2]).channels;
-        cs.push(server.get(c1));
-        cs.push(server2.get(c2));
         if (initialized!=true) {
+            cs.push(server.get(c1));
+            cs.push(server2.get(c2));
             console.log("Discord connection success\nStarting Channels: " + cs[0].id + " " + cs[1].id);var uptime=Date.now() //initialize
             createWeb(cs[0]);
             createWeb(cs[1]);
@@ -66,9 +76,9 @@ bot.on("ready", () => {
                 try {
                     const cha=parseInt(interaction.content.replace(prefix,"").trim().substring(8))-1
                     if (cs[cha].id!=interaction.channel.id && cs[(-cha)+1].id!=interaction.channel.id) {
-                        console.log("Changed channel from "+cs[cha].name+" to "+interaction.channel.name+" ("+interaction.channel.id+")")
-                        cs[cha]=interaction.channel
-                        await createWeb(cs[cha])
+                        console.log("Changed channel from "+cs[cha].name+" to "+interaction.channel.name+" ("+interaction.channel.id+")");
+                        cs[cha]=interaction.channel;
+                        await createWeb(cs[cha]);
                     } else {
                         bot.createMessage(interaction.channel.id,Object.assign({ content: `**You can't change this channel!**\n'${cs[cha].name}' is already channel ${cha+1}`},
                         {
@@ -173,8 +183,11 @@ bot.on("ready", () => {
         
         }
     });
+    bot.on("shardDisconnect",async(e,id)=>{
+        console.error("Shard "+id+" disconnected with error:",e);
+    })
 });
-
+} catch(e) {console.error(e);}
 try {
     bot.connect();
 } catch (error) {
