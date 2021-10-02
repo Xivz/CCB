@@ -46,7 +46,6 @@ async function sendMessage(interaction,webhook) {
 }
 const bot = new Eris(token);
 
-try {
 bot.on("ready", () => {
     try {
         const server=bot.guilds.get(bot.channelGuildMap[c1]).channels;
@@ -185,9 +184,13 @@ bot.on("ready", () => {
     });
     bot.on("shardDisconnect",async(e,id)=>{
         console.error("Shard "+id+" disconnected with error:",e);
-    })
+    });
+    bot.on("error",async(err,id)=>{
+        console.error("Shard error "+id,err)
+    });
 });
-} catch(e) {console.error(e);}
+
+
 try {
     bot.connect();
 } catch (error) {
