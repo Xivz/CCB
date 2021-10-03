@@ -4,6 +4,7 @@ const {prefix,c1,c2,ownerid,token}=require('./set.json')
 const cs=[];
 const createdHooks=new Map();
 const createdMessages=new Map();
+let uptime;
 let initialized=false;
 
 async function createWeb(channel) {
@@ -53,7 +54,7 @@ bot.on("ready", () => {
         if (initialized!=true) {
             cs.push(server.get(c1));
             cs.push(server2.get(c2));
-            console.log("Discord connection success\nStarting Channels: " + cs[0].id + " " + cs[1].id);var uptime=Date.now() //initialize
+            console.log("Discord connection success\nStarting Channels: " + cs[0].id + " " + cs[1].id);uptime=Date.now()
             createWeb(cs[0]);
             createWeb(cs[1]);
             initialized=true;
