@@ -66,130 +66,128 @@ bot.on("ready", () => {
             console.error(e);
         } return
     }
+});
+bot.on("messageCreate", async(interaction) => {
+    if (interaction.author.bot) return;
 
-    bot.on("messageCreate", async(interaction) => {
-        if (interaction.author.bot) return;
-
-        if (interaction.content.startsWith(prefix) && interaction.author.id===ownerid) {
-            if (interaction.content===prefix+" channel_1" || interaction.content===prefix+" channel_2") {
-                try {
-                    const cha=parseInt(interaction.content.replace(prefix,"").trim().substring(8))-1
-                    if (cs[cha].id!=interaction.channel.id && cs[(-cha)+1].id!=interaction.channel.id) {
-                        console.log("Changed channel from "+cs[cha].name+" to "+interaction.channel.name+" ("+interaction.channel.id+")");
-                        cs[cha]=interaction.channel;
-                        await createWeb(cs[cha]);
-                    } else {
-                        bot.createMessage(interaction.channel.id,Object.assign({ content: `**You can't change this channel!**\n'${cs[cha].name}' is already channel ${cha+1}`},
+    if (interaction.content.startsWith(prefix) && interaction.author.id===ownerid) {
+        if (interaction.content===prefix+" channel_1" || interaction.content===prefix+" channel_2") {
+            try {
+                const cha=parseInt(interaction.content.replace(prefix,"").trim().substring(8))-1
+                if (cs[cha].id!=interaction.channel.id && cs[(-cha)+1].id!=interaction.channel.id) {
+                    console.log("Changed channel from "+cs[cha].name+" to "+interaction.channel.name+" ("+interaction.channel.id+")");
+                    cs[cha]=interaction.channel;
+                    await createWeb(cs[cha]);
+                } else {
+                    bot.createMessage(interaction.channel.id,Object.assign({ content: `**You can't change this channel!**\n'${cs[cha].name}' is already channel ${cha+1}`},
+                    {
+                        messageReference: {
+                            messageID: interaction.id
+                        }
+                    },
+                    ));
+                }
+            } catch(err) {
+                console.error('Error while changing channels: ', err);
+    
+            };
+            return;
+        }  else if (interaction.content.replace(prefix,"").trim()==="stats") { 
+            try {
+               await bot.createMessage(interaction.channel.id,Object.assign({
+                   messageReference: {
+                       messageID: interaction.id
+                   }
+               },
+               {
+                embed: {
+                    color: 3447003,
+                    title: "CCB Stats:",
+                    fields: [
                         {
-                            messageReference: {
-                                messageID: interaction.id
-                            }
+                            name: 'Uptime:',
+                            value: `${Math.round((Date.now()-uptime)/60000)} minute(s)`,
+                            inline: true
                         },
-                        ));
-                    }
-                } catch(err) {
-                    console.error('Error while changing channels: ', err);
-        
-                };
-                return;
-            }  else if (interaction.content.replace(prefix,"").trim()==="stats") { 
-                try {
-                   await bot.createMessage(interaction.channel.id,Object.assign({
-                       messageReference: {
-                           messageID: interaction.id
-                       }
-                   },
-                   {
-                    embed: {
-                        color: 3447003,
-                        title: "CCB Stats:",
-                        fields: [
-                            {
-                                name: 'Uptime:',
-                                value: `${Math.round((Date.now()-uptime)/60000)} minute(s)`,
-                                inline: true
-                            },
-                            {
-                                name: 'Shard Latency:',
-                                value: `${bot.shards.get(0).latency}ms`,
-                                inline: true
-                            },
-                            {
-                                name: 'Messages Sent:',
-                                value: `${createdMessages.size}`,
-                                inline: true
-                            },
-                            {
-                                name: 'Channel 1:',
-                                value: `'${cs[0].name}' (${cs[0].id})`,
-                                inline: false
-                            },
-                            {
-                                name: 'Channel 2:',
-                                value: `'${cs[1].name}' (${cs[1].id})`,
-                                inline: false
-                            },
-                        ],
-                        timestamp: new Date()
-                    }
-                }))
-                } catch(err) {
-                    console.error('Error while sending stats ', err);
-                }; 
-                return;
+                        {
+                            name: 'Shard Latency:',
+                            value: `${bot.shards.get(0).latency}ms`,
+                            inline: true
+                        },
+                        {
+                            name: 'Messages Sent:',
+                            value: `${createdMessages.size}`,
+                            inline: true
+                        },
+                        {
+                            name: 'Channel 1:',
+                            value: `'${cs[0].name}' (${cs[0].id})`,
+                            inline: false
+                        },
+                        {
+                            name: 'Channel 2:',
+                            value: `'${cs[1].name}' (${cs[1].id})`,
+                            inline: false
+                        },
+                    ],
+                    timestamp: new Date()
+                }
+            }))
+            } catch(err) {
+                console.error('Error while sending stats ', err);
+            }; 
+            return;
+        }
+    }
+
+        for (const ca in cs) {
+            if (ca && interaction.channel.id===cs[ca].id && createdHooks.has(cs[(-ca)+1].id) ){
+                await sendMessage(interaction,createdHooks.get(cs[(-ca)+1].id));
             }
         }
+});
 
+bot.on("messageDelete", async(interaction)=> {
+    try {
+        if (createdMessages.has(interaction.id)) {
             for (const ca in cs) {
-                if (ca && interaction.channel.id===cs[ca].id && createdHooks.has(cs[(-ca)+1].id) ){
-                    await sendMessage(interaction,createdHooks.get(cs[(-ca)+1].id));
+                if (ca&&createdHooks.has(cs[ca].id)&&createdMessages.get(interaction.id).channel.id===cs[ca].id) {
+                    const hook=createdHooks.get(cs[ca].id);
+                    const message=createdMessages.get(interaction.id);
+                    await bot.deleteWebhookMessage(hook.id,hook.token,message.id).then(console.log('\x1b[33m%s\x1b[0m',`deleted a message from '${message.channel.name}' from ${interaction.author.username||"unavailable"} (${interaction.author.id||"unavailable"}, guild: '${message.channel.guild.name}')`)).catch(e=>console.log(e))
                 }
             }
-    });
-
-    bot.on("messageDelete", async(interaction)=> {
+        }
+    } catch (error) {
+        console.error("Error deleting message: ",error)
+    }
+});
+bot.on("messageUpdate",async(interaction,preinteraction)=> {
+    if (typeof(interaction && preinteraction)!="undefined"&&createdMessages.has(interaction.id)) {
         try {
-            if (createdMessages.has(interaction.id)) {
-                for (const ca in cs) {
-                    if (ca&&createdHooks.has(cs[ca].id)&&createdMessages.get(interaction.id).channel.id===cs[ca].id) {
-                        const hook=createdHooks.get(cs[ca].id);
-                        const message=createdMessages.get(interaction.id);
-                        await bot.deleteWebhookMessage(hook.id,hook.token,message.id).then(console.log('\x1b[33m%s\x1b[0m',`deleted a message from '${message.channel.name}' from ${interaction.author.username||"unavailable"} (${interaction.author.id||"unavailable"}, guild: '${message.channel.guild.name}')`)).catch(e=>console.log(e))
-                    }
+            for (const ca in cs) {
+                if (ca&&createdHooks.has(cs[ca].id)&&createdMessages.get(interaction.id).channel.id===cs[ca].id) {
+                    const hook=createdHooks.get(cs[ca].id);
+                    const message=createdMessages.get(interaction.id);
+                    await bot.editWebhookMessage(hook.id,hook.token,message.id,Object.assign({
+                        content: interaction.content
+                    },{
+                        file: interaction.attachments[0]
+                    })).then(console.log('\x1b[33m%s\x1b[0m',`edited a message from '${interaction.channel.name}' from ${interaction.author.username} (${interaction.author.id}, guild: '${interaction.channel.guild.name}')`)).catch(e=>console.error("Error editing message: ",error));
                 }
             }
         } catch (error) {
-            console.error("Error deleting message: ",error)
+            console.error("Error editing message: ",error);
         }
-    });
-    bot.on("messageUpdate",async(interaction,preinteraction)=> {
-        if (typeof(interaction && preinteraction)!="undefined"&&createdMessages.has(interaction.id)) {
-            try {
-                for (const ca in cs) {
-                    if (ca&&createdHooks.has(cs[ca].id)&&createdMessages.get(interaction.id).channel.id===cs[ca].id) {
-                        const hook=createdHooks.get(cs[ca].id);
-                        const message=createdMessages.get(interaction.id);
-                        await bot.editWebhookMessage(hook.id,hook.token,message.id,Object.assign({
-                            content: interaction.content
-                        },{
-                            file: interaction.attachments[0]
-                        })).then(console.log('\x1b[33m%s\x1b[0m',`edited a message from '${interaction.channel.name}' from ${interaction.author.username} (${interaction.author.id}, guild: '${interaction.channel.guild.name}')`)).catch(e=>console.error("Error editing message: ",error));
-                    }
-                }
-            } catch (error) {
-                console.error("Error editing message: ",error);
-            }
-        
-        }
-    });
-    bot.on("shardDisconnect",async(e,id)=>{
-        console.error("Shard "+id+" disconnected with error:",e);
-    });
-    bot.on("error",async(err,id)=>{
-        console.error("Shard error "+id,err)
-    });
+    
+    }
 });
-
+bot.on("shardDisconnect",async(e,id)=>{
+    console.error("Shard "+id+" disconnected with error:",e);
+});
+bot.on("error",async(err,id)=>{
+    console.error("Shard error "+id,err)
+});
 
 try {
     bot.connect();
