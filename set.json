@@ -1,9 +1,9 @@
 {
-	"prefix": "",
+    "prefix": "",
     "channel_1_id":"",
     "channel_2_id":"",
     "ownerid": "",
-	"token": "",
+    "token": "",
 
     "delete_messages": true,
     "edit_messages": true
